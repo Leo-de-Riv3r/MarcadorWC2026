@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            padding: 0; /* Quitamos margen externo para pegar el marcador a los bordes */
+            box-sizing: border-box;
+        }
+        .marcador-box {
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 6px;
+            padding: 5px 15px; /* Reducimos padding para dar más espacio a los textos */
+            display: grid;
+            grid-template-columns: 1.1fr auto 1.1fr auto; 
+            align-items: center;
+            width: 100%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            border-left: 6px solid #00ffcc;
+            box-sizing: border-box;
+        }
+        
+        /* Ajustamos el tamaño de los equipos (Aumentado de 4vw a 6.5vw) */
+        .team { font-weight: bold; font-size: 6.5vw; text-transform: uppercase; letter-spacing: 1px; }
+        .team.home { text-align: right; padding-right: 15px; }
+        .team.away { text-align: left; padding-left: 15px; }
+        
+        /* Ajustamos el tamaño de los goles (Aumentado de 5.5vw a 9vw) */
+        .score { 
+            font-size: 9vw; 
+            font-weight: 900; 
+            letter-spacing: 2px; 
+            color: #fff;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        /* Bloque lateral derecho optimizado */
+        .time-block {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding-left: 20px;
+            border-left: 3px solid rgba(255, 255, 255, 0.25);
+            margin-left: 10px;
+            min-width: 160px;
+        }
+        
+        /* Tamaño de los estados (Aumentados significativamente) */
+        .status { font-size: 4vw; color: #00ffcc; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .time { font-size: 5vw; color: #fff; font-weight: bold; }
+        
+        .no-matches {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 6.5vw;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-sizing: border-box;
+        }
+        .powered {
+            font-size: 2vw;
+            color: rgba(255,255,255,0.25);
+            text-align: center;
+            margin-top: 3px;
+        }
+        .powered a { color: rgba(255,255,255,0.3); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div id="marcador-container" class="container">
+    <div class="no-matches">Cargando partidos...</div>
+</div>
+
+<script>
+    const API = 'https://sportscore.com/api/widget';
+    let cachedMatches = {};
+
+    async function fetchJSON(url) {
+        const r = await fetch(url);
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    }
+
+    async function inicializar() {
+        try {
+            const data = await fetchJSON(API + '/standings/?sport=football&slug=fifa-world-cup');
+            const allSlugs = [...new Set(data.tables.flatMap(t => t.rows.map(r => r.team_slug)))];
+
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000);
+
+            const results = await Promise.allSettled(
+                allSlugs.map(slug =>
+                    fetch(API + '/team/?sport=football&slug=' + slug + '&limit=30', { signal: controller.signal })
+                        .then(r => r.ok ? r.json() : null)
+                        .catch(() => null)
+                )
+            );
+            clearTimeout(timeout);
+
+            const teamData = results.map(r => r.status === 'fulfilled' ? r.value : null);
+
+            const byKey = {};
+            teamData.filter(Boolean).forEach(res => {
+                (res.matches || []).forEach(m => {
+                    if (m.competition === 'FIFA World Cup' && m.url) {
+                        const existing = byKey[m.url];
+                        if (!existing || m.time > existing.time) byKey[m.url] = m;
+                    }
+                });
+            });
+
+            cachedMatches = byKey;
+            await refrescar();
+        } catch (e) {
+            console.error('Init error:', e);
+            document.getElementById('marcador-container').innerHTML =
+                '<div class="no-matches">Error al cargar</div>';
+        }
+    }
+
+    async function refrescar() {
+        const container = document.getElementById('marcador-container');
+
+        try {
+            const hoy = new Date();
+            const fechaHoy = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+
+            let todos = Object.values(cachedMatches).filter(m =>
+                m.time && m.time.startsWith(fechaHoy)
+            );
+
+            if (todos.length === 0) {
+                container.innerHTML = '<div class="no-matches">⚠️ Sin partidos ahora</div>';
+                return;
+            }
+
+            const actuales = [];
+            const terminados = [];
+
+            todos.forEach(m => {
+                const home = traducirEquipo(m.home);
+                const away = traducirEquipo(m.away);
+                const slug = m.url.replace('/football/match/', '').replace('/', '');
+
+                if (m.status === 'live') {
+                    actuales.push({ home, away, slug,
+                        hs: m.home_score != null ? String(m.home_score) : '0',
+                        as: m.away_score != null ? String(m.away_score) : '0',
+                        min: null
+                    });
+                } else if (m.status === 'finished') {
+                    terminados.push({ home, away, slug,
+                        hs: String(m.home_score ?? '0'),
+                        as: String(m.away_score ?? '0'),
+                        time: m.time
+                    });
+                }
+            });
+
+            if (actuales.length > 0) {
+                const detalles = await Promise.all(actuales.map(m =>
+                    fetchJSON(API + '/match/?sport=football&slug=' + m.slug)
+                        .then(j => ({ slug: m.slug, match: j.match }))
+                        .catch(() => ({ slug: m.slug, match: null }))
+                ));
+                const minMap = {};
+                const scoreMap = {};
+                detalles.forEach(d => {
+                    if (d.match) {
+                        minMap[d.slug] = d.match.live_minute;
+                        if (d.match.home_score != null) scoreMap[d.slug] = {
+                            hs: String(d.match.home_score),
+                            as: String(d.match.away_score)
+                        };
+                    }
+                });
+                actuales.forEach(m => {
+                    if (minMap[m.slug] != null) m.min = minMap[m.slug];
+                    if (scoreMap[m.slug]) { m.hs = scoreMap[m.slug].hs; m.as = scoreMap[m.slug].as; }
+                });
+
+                mostrar(container, actuales.map(m => ({
+                    homeTeam: m.home, awayTeam: m.away,
+                    homeGoals: m.hs, awayGoals: m.as,
+                    minutos: m.min != null ? m.min + "'" : "",
+                    estado: "EN VIVO"
+                })));
+                return;
+            }
+
+            if (terminados.length > 0) {
+                terminados.sort((a, b) => b.time.localeCompare(a.time));
+                const ultimo = terminados[0];
+                mostrar(container, [{
+                    homeTeam: ultimo.home, awayTeam: ultimo.away,
+                    homeGoals: ultimo.hs, awayGoals: ultimo.as,
+                    minutos: "",
+                    estado: "FINALIZADO"
+                }]);
+                return;
+            }
+
+            container.innerHTML = '<div class="no-matches">⚠️ Sin partidos ahora</div>';
+
+        } catch (e) {
+            console.error('Refresh error:', e);
+            container.innerHTML = '<div class="no-matches">⚠️ Error</div>';
+        }
+    }
+
+    function mostrar(container, partidos) {
+        container.innerHTML = '';
+        partidos.forEach(m => {
+            const txtEstado = m.estado ? `<span class="status">${m.estado}</span>` : "";
+            const txtMinutos = m.minutos ? `<span class="time">${m.minutos}</span>` : "";
+            
+            container.innerHTML += `
+                <div class="marcador-box">
+                    <div class="team home">${m.homeTeam}</div>
+                    <div class="score">${m.homeGoals} - ${m.awayGoals}</div>
+                    <div class="team away">${m.awayTeam}</div>
+                    <div class="time-block">
+                        ${txtEstado}
+                        ${txtMinutos}
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML += '<div class="powered">Datos por <a href="https://sportscore.com" target="_blank" rel="dofollow">SportScore</a></div>';
+    }
+
+    function traducirEquipo(nombre) {
+        const t = {
+            "Netherlands": "NED", "Sweden": "SWE", "United States": "USA", "South Korea": "KOR",
+            "Japan": "JPN", "Germany": "GER", "Brazil": "BRA", "Argentina": "ARG",
+            "France": "FRA", "England": "ENG", "Spain": "ESP", "Portugal": "POR",
+            "Mexico": "MEX", "Canada": "CAN", "Belgium": "BEL", "Croatia": "CRO",
+            "Morocco": "MAR", "Senegal": "SEN", "Switzerland": "SUI", "Uruguay": "URU"
+        };
+        return t[nombre] || nombre;
+    }
+
+    inicializar();
+    setInterval(refrescar, 30000);
+</script>
+</body>
+</html>
