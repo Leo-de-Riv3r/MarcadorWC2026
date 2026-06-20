@@ -1,0 +1,4 @@
+2026/06/20-15:59:29.098 67ac Creating DB C:\Users\User\Desktop\MarcadorWC2026\edge-debug\Default\Sync Data\LevelDB since it was missing.
+2026/06/20-15:59:29.112 67ac Reusing MANIFEST C:\Users\User\Desktop\MarcadorWC2026\edge-debug\Default\Sync Data\LevelDB/MANIFEST-000001
+2026/06/20-15:59:29.113 67ac Recovering log #3
+2026/06/20-15:59:29.113 67ac Reusing old log C:\Users\User\Desktop\MarcadorWC2026\edge-debug\Default\Sync Data\LevelDB/000003.log 

@@ -1,0 +1,4 @@
+2026/06/20-15:59:29.251 45a8 Creating DB C:\Users\User\Desktop\MarcadorWC2026\edge-debug\Default\Local Storage\leveldb since it was missing.
+2026/06/20-15:59:29.295 45a8 Reusing MANIFEST C:\Users\User\Desktop\MarcadorWC2026\edge-debug\Default\Local Storage\leveldb/MANIFEST-000001
+2026/06/20-15:59:29.298 45a8 Recovering log #3
+2026/06/20-15:59:29.304 45a8 Reusing old log C:\Users\User\Desktop\MarcadorWC2026\edge-debug\Default\Local Storage\leveldb/000003.log 

@@ -1,0 +1,8 @@
+2026/06/20-15:59:33.296 3a54 Creating DB C:\Users\User\Desktop\MarcadorWC2026\edge-debug\Default\EdgeCoupons/coupons_data.db since it was missing.
+2026/06/20-15:59:33.304 3a54 Reusing MANIFEST C:\Users\User\Desktop\MarcadorWC2026\edge-debug\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/06/20-15:59:33.333 3a54 Recovering log #4
+2026/06/20-15:59:33.334 3a54 Reusing old log C:\Users\User\Desktop\MarcadorWC2026\edge-debug\Default\EdgeCoupons/coupons_data.db/000004.log 
+2026/06/20-15:59:33.389 3a54 Delete type=2 #5
+2026/06/20-15:59:35.637 67ac Level-0 table #6: started
+2026/06/20-15:59:35.644 67ac Level-0 table #6: 682807 bytes OK
+2026/06/20-15:59:35.647 67ac Delete type=0 #4
