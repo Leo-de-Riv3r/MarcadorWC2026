@@ -234,15 +234,27 @@
     }
 
     function traducirEquipo(nombre) {
-        const t = {
-            "Ecuador": "ECU", "Curacao": "CUW", "Netherlands": "NED", "Sweden": "SWE", "United States": "USA", "South Korea": "KOR",
-            "Japan": "JPN", "Germany": "GER", "Brazil": "BRA", "Argentina": "ARG",
-            "France": "FRA", "England": "ENG", "Spain": "ESP", "Portugal": "POR",
-            "Mexico": "MEX", "Canada": "CAN", "Belgium": "BEL", "Croatia": "CRO",
-            "Morocco": "MAR", "Senegal": "SEN", "Switzerland": "SUI", "Uruguay": "URU"
-        };
-        return t[nombre] || nombre;
-    }
+    const t = {
+        // Equipos originales de tu lista
+        "Ecuador": "ECU", "Curacao": "CUW", "Netherlands": "NED", "Sweden": "SWE", 
+        "United States": "USA", "South Korea": "KOR", "Japan": "JPN", "Germany": "GER", 
+        "Brazil": "BRA", "Argentina": "ARG", "France": "FRA", "England": "ENG", 
+        "Spain": "ESP", "Portugal": "POR", "Mexico": "MEX", "Canada": "CAN", 
+        "Belgium": "BEL", "Croatia": "CRO", "Morocco": "MAR", "Senegal": "SEN", 
+        "Switzerland": "SUI", "Uruguay": "URU",
+
+        // Nuevas incorporaciones y resto de clasificados para 2026
+        "Czech Republic": "CZE", "South Africa": "RSA", "Bosnia and Herzegovina": "BIH",
+        "Qatar": "QAT", "Haiti": "HAI", "Scotland": "SCO", "Australia": "AUS", 
+        "Paraguay": "PAR", "Turkey": "TUR", "Ivory Coast": "CIV", "Tunisia": "TUN", 
+        "Egypt": "EGY", "Iran": "IRN", "New Zealand": "NZL", "Cape Verde": "CPV", 
+        "Saudi Arabia": "KSA", "Iraq": "IRQ", "Norway": "NOR", "Algeria": "ALG", 
+        "Austria": "AUT", "Jordan": "JOR", "Colombia": "COL", "DR Congo": "COD", 
+        "Uzbekistan": "UZB", "Ghana": "GHA", "Panama": "PAN"
+    };
+    return t[nombre] || nombre;
+}
+
 
     inicializar();
     setInterval(refrescar, 30000);
