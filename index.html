@@ -126,7 +126,7 @@
             const byKey = {};
             teamData.filter(Boolean).forEach(res => {
                 (res.matches || []).forEach(m => {
-                    if (m.competition === 'FIFA World Cup' && m.url) {
+                    if (m.url) {
                         const existing = byKey[m.url];
                         if (!existing || m.time > existing.time) byKey[m.url] = m;
                     }
@@ -146,46 +146,18 @@
         const container = document.getElementById('marcador-container');
 
         try {
-            const hoy = new Date();
-            const fechaHoy = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}-${String(hoy.getDate()).padStart(2,'0')}`;
+            const fechaHoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
 
-            let todos = Object.values(cachedMatches).filter(m =>
-                m.time && m.time.startsWith(fechaHoy)
+            // 1. Buscar partidos EN VIVO de hoy
+            const actuales = Object.values(cachedMatches).filter(m =>
+                m.time && m.time.startsWith(fechaHoy) && m.status === 'live'
             );
-
-            if (todos.length === 0) {
-                container.innerHTML = '<div class="no-matches">⚠️ Sin partidos ahora</div>';
-                return;
-            }
-
-            const actuales = [];
-            const terminados = [];
-
-            todos.forEach(m => {
-                const home = traducirEquipo(m.home);
-                const away = traducirEquipo(m.away);
-                const slug = m.url.replace('/football/match/', '').replace('/', '');
-
-                if (m.status === 'live') {
-                    actuales.push({ home, away, slug,
-                        hs: m.home_score != null ? String(m.home_score) : '0',
-                        as: m.away_score != null ? String(m.away_score) : '0',
-                        min: null
-                    });
-                } else if (m.status === 'finished') {
-                    terminados.push({ home, away, slug,
-                        hs: String(m.home_score ?? '0'),
-                        as: String(m.away_score ?? '0'),
-                        time: m.time
-                    });
-                }
-            });
 
             if (actuales.length > 0) {
                 const detalles = await Promise.all(actuales.map(m =>
-                    fetchJSON(API + '/match/?sport=football&slug=' + m.slug)
-                        .then(j => ({ slug: m.slug, match: j.match }))
-                        .catch(() => ({ slug: m.slug, match: null }))
+                    fetchJSON(API + '/match/?sport=football&slug=' + m.url.replace('/football/match/', '').replace('/', ''))
+                        .then(j => ({ slug: m.url, match: j.match }))
+                        .catch(() => ({ slug: m.url, match: null }))
                 ));
                 const minMap = {};
                 const scoreMap = {};
@@ -198,26 +170,34 @@
                         };
                     }
                 });
-                actuales.forEach(m => {
-                    if (minMap[m.slug] != null) m.min = minMap[m.slug];
-                    if (scoreMap[m.slug]) { m.hs = scoreMap[m.slug].hs; m.as = scoreMap[m.slug].as; }
-                });
-
-                mostrar(container, actuales.map(m => ({
-                    homeTeam: m.home, awayTeam: m.away,
-                    homeGoals: m.hs, awayGoals: m.as,
-                    minutos: m.min != null ? m.min + "'" : "",
-                    estado: "EN VIVO"
-                })));
+                mostrar(container, actuales.map(m => {
+                    const slug = m.url;
+                    const min = minMap[slug] != null ? minMap[slug] : null;
+                    const hs = scoreMap[slug] ? scoreMap[slug].hs : String(m.home_score ?? '0');
+                    const as = scoreMap[slug] ? scoreMap[slug].as : String(m.away_score ?? '0');
+                    return {
+                        homeTeam: traducirEquipo(m.home),
+                        awayTeam: traducirEquipo(m.away),
+                        homeGoals: hs, awayGoals: as,
+                        minutos: min != null ? min + "'" : "",
+                        estado: "EN VIVO"
+                    };
+                }));
                 return;
             }
 
+            // 2. Sin partidos en vivo → mostrar el último finalizado de cualquier fecha
+            const terminados = Object.values(cachedMatches)
+                .filter(m => m.status === 'finished' && m.time)
+                .sort((a, b) => b.time.localeCompare(a.time));
+
             if (terminados.length > 0) {
-                terminados.sort((a, b) => b.time.localeCompare(a.time));
                 const ultimo = terminados[0];
                 mostrar(container, [{
-                    homeTeam: ultimo.home, awayTeam: ultimo.away,
-                    homeGoals: ultimo.hs, awayGoals: ultimo.as,
+                    homeTeam: traducirEquipo(ultimo.home),
+                    awayTeam: traducirEquipo(ultimo.away),
+                    homeGoals: String(ultimo.home_score ?? '0'),
+                    awayGoals: String(ultimo.away_score ?? '0'),
                     minutos: "",
                     estado: "FINALIZADO"
                 }]);
@@ -255,7 +235,7 @@
 
     function traducirEquipo(nombre) {
         const t = {
-            "Netherlands": "NED", "Sweden": "SWE", "United States": "USA", "South Korea": "KOR",
+            "Ecuador": "ECU", "Curacao": "CUW", "Netherlands": "NED", "Sweden": "SWE", "United States": "USA", "South Korea": "KOR",
             "Japan": "JPN", "Germany": "GER", "Brazil": "BRA", "Argentina": "ARG",
             "France": "FRA", "England": "ENG", "Spain": "ESP", "Portugal": "POR",
             "Mexico": "MEX", "Canada": "CAN", "Belgium": "BEL", "Croatia": "CRO",
