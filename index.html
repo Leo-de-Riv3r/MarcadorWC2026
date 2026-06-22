@@ -38,14 +38,14 @@
         }
         
         /* Ajustamos el tamaño de los equipos (Aumentado de 4vw a 6.5vw) */
-        .team { font-weight: bold; font-size: 6.5vw; text-transform: uppercase; letter-spacing: 1px; }
+        .team { font-weight: bold; font-size: 7.5vw; text-transform: uppercase; letter-spacing: 1px; }
         .team.home { text-align: right; padding-right: 15px; }
         .team.away { text-align: left; padding-left: 15px; }
         
         /* Ajustamos el tamaño de los goles (Aumentado de 5.5vw a 9vw) */
         .score { 
-            font-size: 9vw; 
-            font-weight: 900; 
+            font-size: 10.5vw;
+            font-weight: 900;
             letter-spacing: 2px; 
             color: #fff;
             min-width: 120px;
@@ -65,14 +65,14 @@
         }
         
         /* Tamaño de los estados (Aumentados significativamente) */
-        .status { font-size: 4vw; color: #00ffcc; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
-        .time { font-size: 5vw; color: #fff; font-weight: bold; }
+        .status { font-size: 6.5vw; color: #00ffcc; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .time { font-size: 6vw; color: #fff; font-weight: bold; }
         
         .no-matches {
             background: rgba(0, 0, 0, 0.7);
             padding: 15px;
             border-radius: 8px;
-            font-size: 6.5vw;
+            font-size: 7.5vw;
             font-weight: bold;
             text-align: center;
             width: 100%;
@@ -97,6 +97,8 @@
 <script>
     const API = 'https://sportscore.com/api/widget';
     let cachedMatches = {};
+    let allSlugs = [];
+    let refreshCounter = 0;
 
     async function fetchJSON(url) {
         const r = await fetch(url);
@@ -104,36 +106,36 @@
         return r.json();
     }
 
+    async function actualizarCache() {
+        if (allSlugs.length === 0) return;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const results = await Promise.allSettled(
+            allSlugs.map(slug =>
+                fetch(API + '/team/?sport=football&slug=' + slug + '&limit=30', { signal: controller.signal })
+                    .then(r => r.ok ? r.json() : null)
+                    .catch(() => null)
+            )
+        );
+        clearTimeout(timeout);
+        const byKey = {};
+        results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean).forEach(res => {
+            (res.matches || []).forEach(m => {
+                if (m.url) {
+                    const existing = byKey[m.url];
+                    if (!existing || m.time > existing.time) byKey[m.url] = m;
+                }
+            });
+        });
+        cachedMatches = byKey;
+    }
+
     async function inicializar() {
         try {
             const data = await fetchJSON(API + '/standings/?sport=football&slug=fifa-world-cup');
-            const allSlugs = [...new Set(data.tables.flatMap(t => t.rows.map(r => r.team_slug)))];
+            allSlugs = [...new Set(data.tables.flatMap(t => t.rows.map(r => r.team_slug)))];
 
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 15000);
-
-            const results = await Promise.allSettled(
-                allSlugs.map(slug =>
-                    fetch(API + '/team/?sport=football&slug=' + slug + '&limit=30', { signal: controller.signal })
-                        .then(r => r.ok ? r.json() : null)
-                        .catch(() => null)
-                )
-            );
-            clearTimeout(timeout);
-
-            const teamData = results.map(r => r.status === 'fulfilled' ? r.value : null);
-
-            const byKey = {};
-            teamData.filter(Boolean).forEach(res => {
-                (res.matches || []).forEach(m => {
-                    if (m.url) {
-                        const existing = byKey[m.url];
-                        if (!existing || m.time > existing.time) byKey[m.url] = m;
-                    }
-                });
-            });
-
-            cachedMatches = byKey;
+            await actualizarCache();
             await refrescar();
         } catch (e) {
             console.error('Init error:', e);
@@ -145,12 +147,15 @@
     async function refrescar() {
         const container = document.getElementById('marcador-container');
 
-        try {
-            const fechaHoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' });
+        refreshCounter++;
+        if (refreshCounter % 10 === 0) {
+            actualizarCache().catch(() => {});
+        }
 
-            // 1. Buscar partidos EN VIVO de hoy
+        try {
+            // 1. Buscar partidos EN VIVO (sin filtrar por fecha, porque la API usa UTC)
             const actuales = Object.values(cachedMatches).filter(m =>
-                m.time && m.time.startsWith(fechaHoy) && m.status === 'live'
+                m.status === 'live'
             );
 
             if (actuales.length > 0) {
@@ -215,8 +220,9 @@
     function mostrar(container, partidos) {
         container.innerHTML = '';
         partidos.forEach(m => {
-            const txtEstado = m.estado ? `<span class="status">${m.estado}</span>` : "";
-            const txtMinutos = m.minutos ? `<span class="time">${m.minutos}</span>` : "";
+            const esVivo = m.estado === "EN VIVO";
+            const txtEstado = !esVivo && m.estado ? `<span class="status">${m.estado}</span>` : "";
+            const txtMinutos = m.minutos ? `<span class="${esVivo ? 'status' : 'time'}">${m.minutos}</span>` : "";
             
             container.innerHTML += `
                 <div class="marcador-box">
@@ -234,27 +240,22 @@
     }
 
     function traducirEquipo(nombre) {
-    const t = {
-        // Equipos originales de tu lista
-        "Ecuador": "ECU", "Curacao": "CUW", "Netherlands": "NED", "Sweden": "SWE", 
-        "United States": "USA", "South Korea": "KOR", "Japan": "JPN", "Germany": "GER", 
-        "Brazil": "BRA", "Argentina": "ARG", "France": "FRA", "England": "ENG", 
-        "Spain": "ESP", "Portugal": "POR", "Mexico": "MEX", "Canada": "CAN", 
-        "Belgium": "BEL", "Croatia": "CRO", "Morocco": "MAR", "Senegal": "SEN", 
-        "Switzerland": "SUI", "Uruguay": "URU",
-
-        // Nuevas incorporaciones y resto de clasificados para 2026
-        "Czech Republic": "CZE", "South Africa": "RSA", "Bosnia and Herzegovina": "BIH",
-        "Qatar": "QAT", "Haiti": "HAI", "Scotland": "SCO", "Australia": "AUS", 
-        "Paraguay": "PAR", "Turkey": "TUR", "Ivory Coast": "CIV", "Tunisia": "TUN", 
-        "Egypt": "EGY", "Iran": "IRN", "New Zealand": "NZL", "Cape Verde": "CPV", 
-        "Saudi Arabia": "KSA", "Iraq": "IRQ", "Norway": "NOR", "Algeria": "ALG", 
-        "Austria": "AUT", "Jordan": "JOR", "Colombia": "COL", "DR Congo": "COD", 
-        "Uzbekistan": "UZB", "Ghana": "GHA", "Panama": "PAN"
-    };
-    return t[nombre] || nombre;
-}
-
+        const t = {
+            "Ecuador": "ECU", "Curacao": "CUW", "Netherlands": "NED", "Sweden": "SWE", "United States": "USA", "South Korea": "KOR",
+            "Japan": "JPN", "Germany": "GER", "Brazil": "BRA", "Argentina": "ARG",
+            "France": "FRA", "England": "ENG", "Spain": "ESP", "Portugal": "POR",
+            "Mexico": "MEX", "Canada": "CAN", "Belgium": "BEL", "Croatia": "CRO",
+            "Morocco": "MAR", "Senegal": "SEN", "Switzerland": "SUI", "Uruguay": "URU",
+            "Egypt": "EGY", "New Zealand": "NZL", "Czech Republic": "CZE", "South Africa": "RSA",
+            "Bosnia and Herzegovina": "BIH", "Qatar": "QAT", "Haiti": "HAI", "Scotland": "SCO",
+            "Australia": "AUS", "Paraguay": "PAR", "Turkey": "TUR", "Ivory Coast": "CIV",
+            "Tunisia": "TUN", "Iran": "IRN", "Cape Verde": "CPV", "Saudi Arabia": "KSA",
+            "Iraq": "IRQ", "Norway": "NOR", "Algeria": "ALG", "Austria": "AUT",
+            "Jordan": "JOR", "Colombia": "COL", "DR Congo": "COD", "Uzbekistan": "UZB",
+            "Ghana": "GHA", "Panama": "PAN"
+        };
+        return t[nombre] || nombre;
+    }
 
     inicializar();
     setInterval(refrescar, 30000);
