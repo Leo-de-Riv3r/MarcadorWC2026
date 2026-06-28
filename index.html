@@ -38,9 +38,10 @@
         }
         
         /* Ajustamos el tamaño de los equipos (Aumentado de 4vw a 6.5vw) */
-        .team { font-weight: bold; font-size: 7.5vw; text-transform: uppercase; letter-spacing: 1px; }
+        .team { font-weight: bold; font-size: 6vw; text-transform: uppercase; letter-spacing: 1px; }
         .team.home { text-align: right; padding-right: 15px; }
         .team.away { text-align: left; padding-left: 15px; }
+        .flag { width: 2em; height: 1.5em; vertical-align: middle; margin-right: 0.4em; object-fit: contain; }
         
         /* Ajustamos el tamaño de los goles (Aumentado de 5.5vw a 9vw) */
         .score { 
@@ -155,7 +156,7 @@
         try {
             // 1. Buscar partidos EN VIVO (sin filtrar por fecha, porque la API usa UTC)
             const actuales = Object.values(cachedMatches).filter(m =>
-                m.status === 'live'
+                ['live', 'halftime'].includes(m.status)
             );
 
             if (actuales.length > 0) {
@@ -165,10 +166,12 @@
                         .catch(() => ({ slug: m.url, match: null }))
                 ));
                 const minMap = {};
+                const statusMap = {};
                 const scoreMap = {};
                 detalles.forEach(d => {
                     if (d.match) {
                         minMap[d.slug] = d.match.live_minute;
+                        statusMap[d.slug] = d.match.status;
                         if (d.match.home_score != null) scoreMap[d.slug] = {
                             hs: String(d.match.home_score),
                             as: String(d.match.away_score)
@@ -180,11 +183,13 @@
                     const min = minMap[slug] != null ? minMap[slug] : null;
                     const hs = scoreMap[slug] ? scoreMap[slug].hs : String(m.home_score ?? '0');
                     const as = scoreMap[slug] ? scoreMap[slug].as : String(m.away_score ?? '0');
+                    const st = statusMap[slug];
+                    const isHalftime = st === 'halftime';
                     return {
                         homeTeam: traducirEquipo(m.home),
                         awayTeam: traducirEquipo(m.away),
                         homeGoals: hs, awayGoals: as,
-                        minutos: min != null ? min + "'" : "",
+                        minutos: isHalftime ? "HT" : (min != null ? min + "'" : ""),
                         estado: "EN VIVO"
                     };
                 }));
@@ -203,8 +208,8 @@
                     awayTeam: traducirEquipo(ultimo.away),
                     homeGoals: String(ultimo.home_score ?? '0'),
                     awayGoals: String(ultimo.away_score ?? '0'),
-                    minutos: "",
-                    estado: "FINALIZADO"
+                    minutos: "FT",
+                    estado: "FT"
                 }]);
                 return;
             }
@@ -220,18 +225,15 @@
     function mostrar(container, partidos) {
         container.innerHTML = '';
         partidos.forEach(m => {
-            const esVivo = m.estado === "EN VIVO";
-            const txtEstado = !esVivo && m.estado ? `<span class="status">${m.estado}</span>` : "";
-            const txtMinutos = m.minutos ? `<span class="${esVivo ? 'status' : 'time'}">${m.minutos}</span>` : "";
+            const txt = m.minutos ? `<span class="${m.estado === 'EN VIVO' ? 'status' : 'time'}">${m.minutos}</span>` : "";
             
             container.innerHTML += `
                 <div class="marcador-box">
-                    <div class="team home">${m.homeTeam}</div>
+                    <div class="team home">${banderaEquipo(m.homeTeam)} ${m.homeTeam}</div>
                     <div class="score">${m.homeGoals} - ${m.awayGoals}</div>
-                    <div class="team away">${m.awayTeam}</div>
+                    <div class="team away">${banderaEquipo(m.awayTeam)} ${m.awayTeam}</div>
                     <div class="time-block">
-                        ${txtEstado}
-                        ${txtMinutos}
+                        ${txt}
                     </div>
                 </div>
             `;
@@ -252,9 +254,32 @@
             "Tunisia": "TUN", "Iran": "IRN", "Cape Verde": "CPV", "Saudi Arabia": "KSA",
             "Iraq": "IRQ", "Norway": "NOR", "Algeria": "ALG", "Austria": "AUT",
             "Jordan": "JOR", "Colombia": "COL", "DR Congo": "COD", "Uzbekistan": "UZB",
-            "Ghana": "GHA", "Panama": "PAN"
+            "Ghana": "GHA", "Panama": "PAN",
+            "Czechia": "CZE", "Turkiye": "TUR", "Türkiye": "TUR",
+            "Korea Republic": "KOR", "IR Iran": "IRN",
+            "Côte d'Ivoire": "CIV", "Cabo Verde": "CPV",
+            "Congo DR": "COD", "Curaçao": "CUW"
         };
         return t[nombre] || nombre;
+    }
+
+    function banderaEquipo(codigo) {
+        const mapa = {
+            "ARG": "ar", "AUS": "au", "AUT": "at", "BEL": "be", "BIH": "ba",
+            "BRA": "br", "CAN": "ca", "CIV": "ci", "COD": "cd", "COL": "co",
+            "CPV": "cv", "CRO": "hr", "CUW": "cw", "CZE": "cz", "ECU": "ec",
+            "EGY": "eg", "ESP": "es", "FRA": "fr", "GER": "de", "GHA": "gh",
+            "HAI": "ht", "IRN": "ir", "IRQ": "iq", "JPN": "jp", "JOR": "jo",
+            "KOR": "kr", "KSA": "sa", "MAR": "ma", "MEX": "mx", "NED": "nl",
+            "NZL": "nz", "NOR": "no", "PAN": "pa", "PAR": "py", "POR": "pt",
+            "QAT": "qa", "RSA": "za", "SEN": "sn", "SUI": "ch", "SWE": "se",
+            "TUN": "tn", "TUR": "tr", "USA": "us", "URU": "uy", "UZB": "uz"
+        };
+        const iso = mapa[codigo];
+        if (codigo === "ENG") return `<img src="https://flagcdn.com/gb-eng.svg" class="flag" alt="">`;
+        if (codigo === "SCO") return `<img src="https://flagcdn.com/gb-sct.svg" class="flag" alt="">`;
+        if (!iso) return "";
+        return `<img src="https://flagcdn.com/${iso}.svg" class="flag" alt="">`;
     }
 
     inicializar();
