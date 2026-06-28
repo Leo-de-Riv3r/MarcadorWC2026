@@ -9,7 +9,7 @@
             padding: 0;
             background: transparent;
             font-family: 'Arial', sans-serif;
-            color: #1a1a2e; /* Texto oscuro para contrastar con el fondo claro */
+            color: #1a1a2e;
             width: 100vw;
             height: 100vh;
             display: flex;
@@ -28,30 +28,34 @@
             box-sizing: border-box;
         }
 
-        /* Animación para cambiar los colores del neón fluidamente */
+        /* Animación con transiciones de color usando formato RGB puro de neón */
         @keyframes cambioColorNeon {
             0% {
-                border-color: #00f3ff;
-                box-shadow: 0 0 20px rgba(0, 243, 255, 0.35), inset 0 0 10px rgba(0, 243, 255, 0.1);
+                border-color: rgb(0, 243, 255); /* Cian RGB */
+                box-shadow: 0 0 20px rgba(0, 243, 255, 0.4), inset 0 0 10px rgba(0, 243, 255, 0.1);
             }
-            33% {
-                border-color: #ff00ff;
-                box-shadow: 0 0 20px rgba(255, 0, 255, 0.35), inset 0 0 10px rgba(255, 0, 255, 0.1);
+            25% {
+                border-color: rgb(255, 0, 128); /* Magenta/Rosa RGB */
+                box-shadow: 0 0 20px rgba(255, 0, 128, 0.4), inset 0 0 10px rgba(255, 0, 128, 0.1);
             }
-            66% {
-                border-color: #9d00ff;
-                box-shadow: 0 0 20px rgba(157, 0, 255, 0.35), inset 0 0 10px rgba(157, 0, 255, 0.1);
+            50% {
+                border-color: rgb(157, 0, 255); /* Morado RGB */
+                box-shadow: 0 0 20px rgba(157, 0, 255, 0.4), inset 0 0 10px rgba(157, 0, 255, 0.1);
+            }
+            75% {
+                border-color: rgb(0, 255, 170); /* Verde Neón RGB */
+                box-shadow: 0 0 20px rgba(0, 255, 170, 0.4), inset 0 0 10px rgba(0, 255, 170, 0.1);
             }
             100% {
-                border-color: #00ffaa;
-                box-shadow: 0 0 20px rgba(0, 255, 170, 0.35), inset 0 0 10px rgba(0, 255, 170, 0.1);
+                border-color: rgb(255, 215, 0); /* Dorado/Amarillo RGB */
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), inset 0 0 10px rgba(255, 215, 0, 0.1);
             }
         }
 
-        /* Marcador en tema claro con animación de color activa */
+        /* Marcador en tema claro con animación RGB activa */
         .marcador-box {
-            background: rgba(255, 255, 255, 0.92); /* Fondo claro traslúcido */
-            border: 3px solid #00f3ff;
+            background: rgba(255, 255, 255, 0.92);
+            border: 3px solid rgb(0, 243, 255);
             border-radius: 2vw; 
             display: flex;
             align-items: center;
@@ -63,7 +67,7 @@
             padding: 1% 2%;
             height: auto;
             aspect-ratio: 10 / 1.3; 
-            animation: cambioColorNeon 8s linear infinite alternate; /* Aplica el cambio de color continuo */
+            animation: cambioColorNeon 10s linear infinite; /* Animación cíclica fluida */
         }
 
         /* Bloques de equipo y bandera */
@@ -111,12 +115,12 @@
             flex-shrink: 0;
         }
         .dot.blue { 
-            background-color: #00bfff; 
-            box-shadow: 0 0 8px #00bfff;
+            background-color: rgb(0, 191, 255); 
+            box-shadow: 0 0 8px rgb(0, 191, 255);
         }
         .dot.red { 
-            background-color: #ff2a6d; 
-            box-shadow: 0 0 8px #ff2a6d;
+            background-color: rgb(255, 42, 109); 
+            box-shadow: 0 0 8px rgb(255, 42, 109);
         }
         
         /* Contenedor central */
@@ -132,7 +136,7 @@
             font-size: 5.8vw;
             font-weight: 900;
             color: #ffffff; 
-            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); 
+            background: linear-gradient(135deg, rgb(0, 198, 255) 0%, rgb(0, 114, 255) 100%); 
             height: 8.5vw;
             width: 8.5vw;
             max-height: 75px;
@@ -145,10 +149,10 @@
             text-shadow: 1px 2px 4px rgba(0,0,0,0.2);
         }
         
-        /* Bloque central para el tiempo transcurrido en el tema claro */
+        /* Bloque central para el tiempo transcurrido */
         .time-center-box {
             background-color: #f4f6f9;
-            color: #6a0dad;
+            color: rgb(106, 13, 173);
             font-weight: 900;
             font-size: 3.4vw;
             height: 8.5vw;
@@ -171,24 +175,14 @@
             font-weight: bold;
             text-align: center;
             color: #1a1a2e;
-            border: 2px solid #ff0055;
+            border: 2px solid rgb(255, 0, 85);
             box-shadow: 0 4px 15px rgba(255, 0, 85, 0.15);
         }
-
-        .powered {
-            font-size: 1.8vw;
-            color: rgba(0, 0, 0, 0.4);
-            text-align: center;
-            margin-top: 1%;
-            font-weight: bold;
-        }
-        .powered a { color: #0072ff; text-decoration: none; }
 
         @media (min-width: 1200px) {
             .team { font-size: 58px; }
             .time-center-box { font-size: 40px; }
             .score { font-size: 70px; }
-            .powered { font-size: 14px; }
         }
     </style>
 </head>
@@ -330,18 +324,21 @@
 
             container.innerHTML += `
                 <div class="marcador-box">
+                    <!-- Local -->
                     <div class="team-block home">
                         ${banderaEquipo(m.homeTeam)}
                         <span class="dot blue"></span>
                         <div class="team">${m.homeTeam}</div>
                     </div>
                     
+                    <!-- Contenedor de marcador central -->
                     <div class="score-container">
                         <div class="score">${m.homeGoals}</div>
                         <div class="time-center-box">${displayTime}</div>
                         <div class="score">${m.awayGoals}</div>
                     </div>
                     
+                    <!-- Visitante -->
                     <div class="team-block away">
                         <div class="team">${m.awayTeam}</div>
                         <span class="dot red"></span>
