@@ -28,16 +28,18 @@
             box-sizing: border-box;
         }
 
-        /* Estilo principal responsivo */
+        /* Estilo principal responsivo con Gradiente y Neón */
         .marcador-box {
-            background: #111111;
+            background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2a 100%);
+            border: 2px solid #00f3ff;
             border-radius: 2vw; 
             display: flex;
             align-items: center;
             justify-content: space-between;
             width: 100%;
             max-width: 100%;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.8);
+            /* Resplandor Neón de fondo */
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2), inset 0 0 15px rgba(186, 0, 255, 0.2);
             box-sizing: border-box;
             overflow: hidden;
             padding: 1% 2%;
@@ -60,23 +62,25 @@
         }
         
         .team { 
-            font-weight: 800; 
-            font-size: 4.5vw; 
+            font-weight: 900; 
+            font-size: 4.8vw; 
             text-transform: uppercase; 
-            letter-spacing: 0.05vw;
+            letter-spacing: 0.1vw;
             color: #ffffff;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
         }
         
-        /* Banderas más grandes */
+        /* Banderas maximizadas */
         .flag { 
-            width: 8vw; 
-            max-width: 85px;
+            width: 10vw; 
+            max-width: 105px;
             height: auto; 
             object-fit: contain; 
-            border-radius: 4px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
         }
 
-        /* Puntos decorativos fluidos */
+        /* Puntos decorativos estilo LED Neón */
         .dot {
             width: 1.5vw;
             height: 1.5vw;
@@ -88,8 +92,14 @@
             display: inline-block;
             flex-shrink: 0;
         }
-        .dot.blue { background-color: #2b76f7; }
-        .dot.red { background-color: #e52332; }
+        .dot.blue { 
+            background-color: #00f3ff; 
+            box-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff;
+        }
+        .dot.red { 
+            background-color: #ff0055; 
+            box-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055;
+        }
         
         /* Contenedor central de Goles y Tiempo */
         .score-container {
@@ -99,30 +109,32 @@
             justify-content: center;
         }
 
-        /* Bloques de Goles fluidos */
+        /* Bloques de Goles con Gradiente Neón de Alto Contraste */
         .score { 
-            font-size: 5.5vw;
+            font-size: 5.8vw;
             font-weight: 900;
-            color: #0d221c;
-            background-color: #8bf0ca; 
-            height: 8vw;
-            width: 8vw;
-            max-height: 70px;
-            max-width: 70px;
+            color: #03030a; /* Súper oscuro para contraste óptimo */
+            background: linear-gradient(180deg, #00f3ff 0%, #00ffaa 100%); 
+            height: 8.5vw;
+            width: 8.5vw;
+            max-height: 75px;
+            max-width: 75px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12%;
+            border-radius: 16%;
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
         }
         
-        /* Bloque central para el tiempo transcurrido fluido */
+        /* Bloque central para el tiempo transcurrido (Brillo morado) */
         .time-center-box {
             background-color: #000000;
-            color: #ffffff;
+            color: #ba00ff;
+            text-shadow: 0 0 8px #ba00ff;
             font-weight: 900;
-            font-size: 3.2vw;
-            height: 8vw;
-            max-height: 70px;
+            font-size: 3.4vw;
+            height: 8.5vw;
+            max-height: 75px;
             padding: 0 2vw;
             display: flex;
             align-items: center;
@@ -132,27 +144,29 @@
         }
         
         .no-matches {
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(13, 13, 26, 0.9);
             padding: 3vw 6vw;
             border-radius: 2vw;
             font-size: 4vw;
             font-weight: bold;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 2px solid #ff0055;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
         }
 
         .powered {
             font-size: 1.8vw;
-            color: rgba(255,255,255,0.3);
+            color: rgba(0, 243, 255, 0.4);
             text-align: center;
             margin-top: 1%;
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
         }
-        .powered a { color: rgba(255,255,255,0.4); text-decoration: none; }
+        .powered a { color: rgba(0, 243, 255, 0.6); text-decoration: none; }
 
         @media (min-width: 1200px) {
-            .team { font-size: 54px; }
-            .time-center-box { font-size: 38px; }
-            .score { font-size: 66px; }
+            .team { font-size: 58px; }
+            .time-center-box { font-size: 40px; }
+            .score { font-size: 70px; }
             .powered { font-size: 14px; }
         }
     </style>
