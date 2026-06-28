@@ -28,31 +28,34 @@
             box-sizing: border-box;
         }
 
-        /* Animación con transiciones de color usando formato RGB puro de neón */
+        /* Animación RGB en loop infinito perfecto (comienza y termina en el mismo color) */
         @keyframes cambioColorNeon {
             0% {
                 border-color: rgb(0, 243, 255); /* Cian RGB */
                 box-shadow: 0 0 20px rgba(0, 243, 255, 0.4), inset 0 0 10px rgba(0, 243, 255, 0.1);
             }
-            25% {
+            20% {
                 border-color: rgb(255, 0, 128); /* Magenta/Rosa RGB */
                 box-shadow: 0 0 20px rgba(255, 0, 128, 0.4), inset 0 0 10px rgba(255, 0, 128, 0.1);
             }
-            50% {
+            40% {
                 border-color: rgb(157, 0, 255); /* Morado RGB */
                 box-shadow: 0 0 20px rgba(157, 0, 255, 0.4), inset 0 0 10px rgba(157, 0, 255, 0.1);
             }
-            75% {
+            60% {
                 border-color: rgb(0, 255, 170); /* Verde Neón RGB */
                 box-shadow: 0 0 20px rgba(0, 255, 170, 0.4), inset 0 0 10px rgba(0, 255, 170, 0.1);
             }
-            100% {
+            80% {
                 border-color: rgb(255, 215, 0); /* Dorado/Amarillo RGB */
                 box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), inset 0 0 10px rgba(255, 215, 0, 0.1);
             }
+            100% {
+                border-color: rgb(0, 243, 255); /* Regresa al Cian RGB para cerrar el bucle */
+                box-shadow: 0 0 20px rgba(0, 243, 255, 0.4), inset 0 0 10px rgba(0, 243, 255, 0.1);
+            }
         }
 
-        /* Marcador en tema claro con animación RGB activa */
         .marcador-box {
             background: rgba(255, 255, 255, 0.92);
             border: 3px solid rgb(0, 243, 255);
@@ -67,7 +70,7 @@
             padding: 1% 2%;
             height: auto;
             aspect-ratio: 10 / 1.3; 
-            animation: cambioColorNeon 10s linear infinite; /* Animación cíclica fluida */
+            animation: cambioColorNeon 12s linear infinite;
         }
 
         /* Bloques de equipo y bandera */
@@ -91,6 +94,13 @@
             letter-spacing: 0.1vw;
             color: #1a1a2e;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            transition: color 0.4s ease;
+        }
+
+        /* Estilo especial destacado para el equipo que va ganando */
+        .team.winner {
+            color: rgb(0, 190, 110); /* Verde esmeralda neón de alto contraste en fondo claro */
+            text-shadow: 0 0 8px rgba(0, 255, 140, 0.3);
         }
         
         .flag { 
@@ -101,27 +111,6 @@
             border-radius: 6px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
-
-        /* Puntos decorativos estilo LED */
-        .dot {
-            width: 1.5vw;
-            height: 1.5vw;
-            max-width: 12px;
-            max-height: 12px;
-            min-width: 6px;
-            min-height: 6px;
-            border-radius: 50%;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-        .dot.blue { 
-            background-color: rgb(0, 191, 255); 
-            box-shadow: 0 0 8px rgb(0, 191, 255);
-        }
-        .dot.red { 
-            background-color: rgb(255, 42, 109); 
-            box-shadow: 0 0 8px rgb(255, 42, 109);
-        }
         
         /* Contenedor central */
         .score-container {
@@ -131,7 +120,7 @@
             justify-content: center;
         }
 
-        /* Goles con Gradiente Pastel Neón Brillante */
+        /* Goles con Gradiente */
         .score { 
             font-size: 5.8vw;
             font-weight: 900;
@@ -149,7 +138,7 @@
             text-shadow: 1px 2px 4px rgba(0,0,0,0.2);
         }
         
-        /* Bloque central para el tiempo transcurrido */
+        /* Bloque central para el tiempo */
         .time-center-box {
             background-color: #f4f6f9;
             color: rgb(106, 13, 173);
@@ -321,14 +310,20 @@
         container.innerHTML = '';
         partidos.forEach(m => {
             const displayTime = m.minutos || "--";
+            
+            // Lógica para detectar quién va ganando
+            const golesHome = parseInt(m.homeGoals) || 0;
+            const golesAway = parseInt(m.awayGoals) || 0;
+            
+            const homeWinnerClass = golesHome > golesAway ? 'winner' : '';
+            const awayWinnerClass = golesAway > golesHome ? 'winner' : '';
 
             container.innerHTML += `
                 <div class="marcador-box">
                     <!-- Local -->
                     <div class="team-block home">
                         ${banderaEquipo(m.homeTeam)}
-                        <span class="dot blue"></span>
-                        <div class="team">${m.homeTeam}</div>
+                        <div class="team ${homeWinnerClass}">${m.homeTeam}</div>
                     </div>
                     
                     <!-- Contenedor de marcador central -->
@@ -340,8 +335,7 @@
                     
                     <!-- Visitante -->
                     <div class="team-block away">
-                        <div class="team">${m.awayTeam}</div>
-                        <span class="dot red"></span>
+                        <div class="team ${awayWinnerClass}">${m.awayTeam}</div>
                         ${banderaEquipo(m.awayTeam)}
                     </div>
                 </div>
