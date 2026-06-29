@@ -282,41 +282,41 @@
                 const minMap = {};
                 const statusMap = {};
                 const scoreMap = {};
-                const penMap = {};
                 detalles.forEach(d => {
                     if (d.match) {
-                        console.log("API match detail:", d.match);
                         minMap[d.slug] = d.match.live_minute;
                         statusMap[d.slug] = d.match.status;
                         if (d.match.home_score != null) scoreMap[d.slug] = {
                             hs: String(d.match.home_score),
                             as: String(d.match.away_score)
                         };
-                        if (d.match.home_penalty_score != null) penMap[d.slug] = {
-                            h: String(d.match.home_penalty_score),
-                            a: String(d.match.away_penalty_score)
-                        };
                     }
                 });
                 mostrar(container, actuales.map(m => {
-                    console.log("Match list item:", m);
                     const slug = m.url;
                     const min = minMap[slug] != null ? minMap[slug] : null;
                     const hs = scoreMap[slug] ? scoreMap[slug].hs : String(m.home_score ?? '0');
                     const as = scoreMap[slug] ? scoreMap[slug].as : String(m.away_score ?? '0');
                     const st = statusMap[slug];
                     const isHalftime = st === 'halftime';
-                    const isPen = st === 'pen' || st === 'penalty';
-                    const penScore = penMap[slug];
+                    const isPEN = st === 'pen' || st === 'penalty' || min === "PEN";
+                    const penGoals = (m.incidents || []).reduce((acc, inc) => {
+                        if (inc.type === "Penalty shootout goal") {
+                            if (inc.side === "home") acc.h++;
+                            else if (inc.side === "away") acc.a++;
+                        }
+                        return acc;
+                    }, { h: 0, a: 0 });
+                    const hasPenScore = penGoals.h + penGoals.a > 0;
                     return {
                         homeTeam: traducirEquipo(m.home),
                         awayTeam: traducirEquipo(m.away),
                         homeGoals: hs, awayGoals: as,
-                        minutos: isPen
-                            ? (penScore ? `PEN ${penScore.h}-${penScore.a}` : "PEN")
+                        minutos: isPEN
+                            ? (hasPenScore ? `PEN ${penGoals.h}-${penGoals.a}` : "PEN")
                             : (isHalftime ? "HT" : (min != null ? (isNaN(min) ? min : min + "'") : "1'")),
                         estado: "EN VIVO",
-                        isPEN: isPen
+                        isPEN: isPEN
                     };
                 }));
                 return;
