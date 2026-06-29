@@ -260,7 +260,7 @@
 
         try {
             const actuales = Object.values(cachedMatches).filter(m =>
-                ['live', 'halftime'].includes(m.status)
+                ['live', 'halftime', 'et', 'extratime', 'pen'].includes(m.status)
             );
 
             if (actuales.length > 0) {
@@ -272,6 +272,7 @@
                 const minMap = {};
                 const statusMap = {};
                 const scoreMap = {};
+                const penMap = {};
                 detalles.forEach(d => {
                     if (d.match) {
                         minMap[d.slug] = d.match.live_minute;
@@ -279,6 +280,10 @@
                         if (d.match.home_score != null) scoreMap[d.slug] = {
                             hs: String(d.match.home_score),
                             as: String(d.match.away_score)
+                        };
+                        if (d.match.home_penalty_score != null) penMap[d.slug] = {
+                            h: String(d.match.home_penalty_score),
+                            a: String(d.match.away_penalty_score)
                         };
                     }
                 });
@@ -289,11 +294,15 @@
                     const as = scoreMap[slug] ? scoreMap[slug].as : String(m.away_score ?? '0');
                     const st = statusMap[slug];
                     const isHalftime = st === 'halftime';
+                    const isPen = st === 'pen' || st === 'penalty';
+                    const penScore = penMap[slug];
                     return {
                         homeTeam: traducirEquipo(m.home),
                         awayTeam: traducirEquipo(m.away),
                         homeGoals: hs, awayGoals: as,
-                        minutos: isHalftime ? "HT" : (min != null ? min + "'" : "1'"),
+                        minutos: isPen
+                            ? (penScore ? `PEN ${penScore.h}-${penScore.a}` : "PEN")
+                            : (isHalftime ? "HT" : (min != null ? (isNaN(min) ? min : min + "'") : "1'")),
                         estado: "EN VIVO"
                     };
                 }));
