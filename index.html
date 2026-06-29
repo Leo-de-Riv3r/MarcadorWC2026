@@ -138,6 +138,16 @@
             height: 100%;
             justify-content: center;
         }
+        .score-container.pen {
+            flex-direction: column;
+            gap: 2px;
+        }
+        .score-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
 
         /* Goles agrandados con fuentes potentes */
         .score { 
@@ -303,7 +313,8 @@
                         minutos: isPen
                             ? (penScore ? `PEN ${penScore.h}-${penScore.a}` : "PEN")
                             : (isHalftime ? "HT" : (min != null ? (isNaN(min) ? min : min + "'") : "1'")),
-                        estado: "EN VIVO"
+                        estado: "EN VIVO",
+                        isPEN: isPen
                     };
                 }));
                 return;
@@ -363,10 +374,16 @@
                     </div>
                     
                     <!-- Contenedor de marcador central -->
-                    <div class="score-container">
-                        <div class="score">${m.homeGoals}</div>
+                    <div class="score-container${m.isPEN ? ' pen' : ''}">
+                        ${m.isPEN ? `
+                        <div class="score-row">
+                            <div class="score">${m.homeGoals}</div>
+                            <div class="score">${m.awayGoals}</div>
+                        </div>` : `
+                        <div class="score">${m.homeGoals}</div>`}
                         <div class="time-center-box">${displayTime}</div>
-                        <div class="score">${m.awayGoals}</div>
+                        ${m.isPEN ? '' : `
+                        <div class="score">${m.awayGoals}</div>`}
                     </div>
                     
                     <!-- Visitante -->
