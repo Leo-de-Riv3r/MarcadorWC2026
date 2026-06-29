@@ -285,6 +285,7 @@
                 const penMap = {};
                 detalles.forEach(d => {
                     if (d.match) {
+                        console.log("API match detail:", d.match);
                         minMap[d.slug] = d.match.live_minute;
                         statusMap[d.slug] = d.match.status;
                         if (d.match.home_score != null) scoreMap[d.slug] = {
@@ -298,6 +299,7 @@
                     }
                 });
                 mostrar(container, actuales.map(m => {
+                    console.log("Match list item:", m);
                     const slug = m.url;
                     const min = minMap[slug] != null ? minMap[slug] : null;
                     const hs = scoreMap[slug] ? scoreMap[slug].hs : String(m.home_score ?? '0');
