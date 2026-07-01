@@ -130,6 +130,7 @@
             box-sizing: border-box;
             border: 2px solid transparent;
         }
+        .yellow-card { font-size: 3.5vw; margin: 0 0.3vw; line-height: 1; }
         
         /* Contenedor central */
         .score-container {
@@ -308,6 +309,12 @@
                         return acc;
                     }, { h: 0, a: 0 });
                     const hasPenScore = penGoals.h + penGoals.a > 0;
+                    const yellows = (m.incidents || []).filter(i => i.type === "Yellow card")
+                        .reduce((acc, i) => {
+                            if (i.side === "home") acc.h++;
+                            else if (i.side === "away") acc.a++;
+                            return acc;
+                        }, { h: 0, a: 0 });
                     return {
                         homeTeam: traducirEquipo(m.home),
                         awayTeam: traducirEquipo(m.away),
@@ -316,7 +323,9 @@
                             ? (hasPenScore ? `PEN ${penGoals.h}-${penGoals.a}` : "PEN")
                             : (isHalftime ? "HT" : (min != null ? (isNaN(min) ? min : min + "'") : "1'")),
                         estado: "EN VIVO",
-                        isPEN: isPEN
+                        isPEN: isPEN,
+                        yellowHome: yellows.h,
+                        yellowAway: yellows.a
                     };
                 }));
                 return;
@@ -372,6 +381,7 @@
                     <!-- Local -->
                     <div class="team-block home ${homeBlockClass}">
                         ${banderaEquipo(m.homeTeam)}
+                        ${m.yellowHome ? `<span class="yellow-card">🟨${m.yellowHome}</span>` : ""}
                         <div class="team">${m.homeTeam}</div>
                     </div>
                     
@@ -391,6 +401,7 @@
                     <!-- Visitante -->
                     <div class="team-block away ${awayBlockClass}">
                         <div class="team">${m.awayTeam}</div>
+                        ${m.yellowAway ? `<span class="yellow-card">🟨${m.yellowAway}</span>` : ""}
                         ${banderaEquipo(m.awayTeam)}
                     </div>
                 </div>
